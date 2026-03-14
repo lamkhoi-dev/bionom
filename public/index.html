@@ -7,6 +7,40 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+
+  <!-- Overlay hướng dẫn mở trong trình duyệt (chỉ hiện trong TikTok in-app browser) -->
+  <div id="iab-overlay" class="iab-overlay" style="display:none">
+    <div class="iab-content">
+      <div class="iab-arrow">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fe2c55" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </div>
+      <div class="iab-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="12" cy="5" r="1" fill="#fff"/>
+          <circle cx="12" cy="12" r="1" fill="#fff"/>
+          <circle cx="12" cy="19" r="1" fill="#fff"/>
+        </svg>
+      </div>
+      <h2>Mở trong trình duyệt</h2>
+      <p>Bấm <strong>⋮</strong> hoặc <strong>⋯</strong> ở góc trên bên phải, sau đó chọn <strong>"Mở trong trình duyệt"</strong></p>
+      <div class="iab-steps">
+        <div class="iab-step">
+          <span class="step-num">1</span>
+          <span>Bấm <strong>⋮</strong> phía trên</span>
+        </div>
+        <div class="iab-step">
+          <span class="step-num">2</span>
+          <span>Chọn <strong>"Mở trong trình duyệt"</strong></span>
+        </div>
+      </div>
+      <button id="iab-copy" class="iab-copy-btn">Hoặc bấm để copy link</button>
+      <p class="iab-hint">Rồi dán vào trình duyệt Chrome / Safari</p>
+    </div>
+  </div>
+
+  <!-- Bio page chính -->
   <div class="container">
     <div class="profile">
       <div class="avatar">
@@ -32,5 +66,42 @@
       <p>&copy; 2026 Sê Pan Nhan</p>
     </footer>
   </div>
+
+  <script>
+  (function() {
+    var ua = navigator.userAgent || '';
+    var isTikTok = /musical_ly|tiktok|bytedance/i.test(ua);
+
+    if (!isTikTok) return;
+
+    // Hiện overlay hướng dẫn
+    var overlay = document.getElementById('iab-overlay');
+    overlay.style.display = 'flex';
+
+    // Copy link button
+    var copyBtn = document.getElementById('iab-copy');
+    copyBtn.addEventListener('click', function() {
+      var url = window.location.href;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function() {
+          copyBtn.textContent = 'Đã copy link!';
+          copyBtn.style.background = '#25f4ee';
+          copyBtn.style.color = '#000';
+        });
+      } else {
+        // Fallback cho WebView cũ
+        var input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        copyBtn.textContent = 'Đã copy link!';
+        copyBtn.style.background = '#25f4ee';
+        copyBtn.style.color = '#000';
+      }
+    });
+  })();
+  </script>
 </body>
 </html>

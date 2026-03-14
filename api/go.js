@@ -13,110 +13,68 @@ module.exports = (req, res) => {
   const deepLink = link.deepLink || '';
   const intentUrl = link.intentUrl || '';
 
-  // Set no-cache headers to prevent TikTok WebView from caching
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
-  // Return a lightweight HTML page that attempts deep link first,
-  // then falls back to regular URL
+  // Lightweight redirect page
+  // - In TikTok WebView: DON'T attempt deep links (causes error), just go to web URL
+  // - In system browser: attempt deep link first, fallback to web URL
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="3;url=${webUrl}">
   <title>Redirecting...</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    .container { max-width: 320px; }
-    .spinner {
-      width: 36px; height: 36px;
-      border: 3px solid rgba(255,255,255,0.2);
-      border-top-color: #fe2c55;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
-    .btn {
-      display: inline-block;
-      padding: 14px 32px;
-      background: #1877f2;
-      color: #fff;
-      text-decoration: none;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 600;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .btn.show { opacity: 1; }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;text-align:center;padding:20px}
+    .c{max-width:320px}
+    .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.2);border-top-color:#fe2c55;border-radius:50%;animation:s .8s linear infinite;margin:0 auto 16px}
+    @keyframes s{to{transform:rotate(360deg)}}
+    p{font-size:14px;opacity:.7}
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="c">
     <div class="spinner"></div>
     <p>Đang chuyển hướng...</p>
-    <a id="fallback-btn" class="btn" href="${webUrl}">Mở ${link.label}</a>
   </div>
-
   <script>
-    (function() {
-      var webUrl = ${JSON.stringify(webUrl)};
-      var deepLink = ${JSON.stringify(deepLink)};
-      var intentUrl = ${JSON.stringify(intentUrl)};
-      var ua = navigator.userAgent || '';
-      var isAndroid = /android/i.test(ua);
-      var redirected = false;
+  (function(){
+    var web = ${JSON.stringify(webUrl)};
+    var deep = ${JSON.stringify(deepLink)};
+    var intent = ${JSON.stringify(intentUrl)};
+    var ua = navigator.userAgent || '';
+    var isAndroid = /android/i.test(ua);
+    var isTikTok = /musical_ly|tiktok|bytedance/i.test(ua);
+    var isWebView = /(WebView)|(iPhone|iPod|iPad)(?!.*Safari\\/)|(Android.*wv\\))/i.test(ua);
+    var done = false;
 
-      function goWeb() {
-        if (!redirected) {
-          redirected = true;
-          window.location.href = webUrl;
-        }
-      }
+    function go(url) {
+      if (!done) { done = true; window.location.replace(url); }
+    }
 
-      // Show manual button after 2 seconds as last resort
+    // In TikTok WebView: deep links are BLOCKED (causes "cannot complete action")
+    // So just redirect to the web URL directly
+    if (isTikTok || isWebView) {
+      go(web);
+      return;
+    }
+
+    // In system browser: try deep link first, then fallback to web
+    if (deep) {
+      window.location.href = deep;
+    }
+    if (isAndroid && intent) {
       setTimeout(function() {
-        var btn = document.getElementById('fallback-btn');
-        if (btn) btn.classList.add('show');
-      }, 2000);
-
-      // Layer 1: Try deep link immediately
-      if (deepLink) {
-        window.location.href = deepLink;
-      }
-
-      // Layer 2: Android Intent URL fallback after 500ms
-      if (isAndroid && intentUrl) {
-        setTimeout(function() {
-          if (!document.hidden) {
-            window.location.href = intentUrl;
-          }
-        }, 500);
-      }
-
-      // Layer 3: Regular URL fallback after 1200ms
-      setTimeout(function() {
-        if (!document.hidden) {
-          goWeb();
-        }
-      }, 1200);
-    })();
+        if (!document.hidden) window.location.href = intent;
+      }, 500);
+    }
+    setTimeout(function() {
+      if (!document.hidden) go(web);
+    }, 1200);
+  })();
   </script>
 </body>
 </html>`;
