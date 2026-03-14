@@ -1,0 +1,16 @@
+{
+  "profile": {
+    "name": "Sê Pan Nhan",
+    "avatar": "",
+    "bio": "Theo dõi mình trên các nền tảng"
+  },
+  "links": {
+    "facebook": {
+      "label": "Facebook",
+      "icon": "facebook",
+      "url": "https://www.facebook.com/sepannhan",
+      "deepLink": "fb://facewebmodal/f?href=https://www.facebook.com/sepannhan",
+      "intentUrl": "intent://www.facebook.com/sepannhan#Intent;scheme=https;package=com.facebook.katana;end"
+    }
+  }
+}
